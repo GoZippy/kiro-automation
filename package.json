@@ -1,0 +1,44 @@
+{
+  "name": "kiro-automation",
+  "version": "1.0.0",
+  "description": "Comprehensive automation toolkit for Kiro IDE - autonomous task execution and VS Code extension",
+  "private": true,
+  "workspaces": [
+    "executor",
+    "extension"
+  ],
+  "scripts": {
+    "install:all": "npm install && cd executor && npm install && cd ../extension && npm install",
+    "build": "npm run build:executor && npm run build:extension",
+    "build:executor": "cd executor && npm run build",
+    "build:extension": "cd extension && npm run compile",
+    "test": "npm run test:executor && npm run test:extension",
+    "test:executor": "cd executor && npm test",
+    "test:extension": "cd extension && npm test",
+    "clean": "npm run clean:executor && npm run clean:extension",
+    "clean:executor": "cd executor && rm -rf node_modules execution-state.json execution.log",
+    "clean:extension": "cd extension && rm -rf node_modules out *.vsix",
+    "package:extension": "cd extension && npm run package",
+    "start:executor": "cd executor && npm start",
+    "docs": "echo 'Documentation available in README.md and docs/ directory'"
+  },
+  "keywords": [
+    "kiro",
+    "automation",
+    "ai-development",
+    "task-execution",
+    "vscode-extension",
+    "autonomous"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/kiro-automation"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "vscode": "^1.60.0"
+  },
+  "devDependencies": {}
+}

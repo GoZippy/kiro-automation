@@ -1,0 +1,20 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <rect width="128" height="128" fill="#007ACC" rx="16"/>
+  <g fill="#FFFFFF">
+    <!-- Robot head -->
+    <rect x="44" y="32" width="40" height="36" rx="4"/>
+    <!-- Eyes -->
+    <circle cx="56" cy="48" r="4" fill="#007ACC"/>
+    <circle cx="72" cy="48" r="4" fill="#007ACC"/>
+    <!-- Antenna -->
+    <rect x="62" y="24" width="4" height="8"/>
+    <circle cx="64" cy="22" r="3"/>
+    <!-- Body -->
+    <rect x="48" y="72" width="32" height="24" rx="2"/>
+    <!-- Arms -->
+    <rect x="36" y="76" width="8" height="16" rx="2"/>
+    <rect x="84" y="76" width="8" height="16" rx="2"/>
+    <!-- Play symbol -->
+    <polygon points="58,82 58,90 66,86" fill="#00FF00"/>
+  </g>
+</svg>

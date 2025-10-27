@@ -1,0 +1,485 @@
+{
+  "name": "kiro-automation-extension",
+  "displayName": "Kiro Automation Extension",
+  "description": "Autonomous task execution for Kiro IDE - automate your development workflow with AI-powered task management",
+  "version": "1.0.0",
+  "publisher": "kiro",
+  "author": {
+    "name": "Kiro Team"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/kiro/kiro-automation-extension#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kiro/kiro-automation-extension.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kiro/kiro-automation-extension/issues"
+  },
+  "keywords": [
+    "kiro",
+    "automation",
+    "ai",
+    "task-management",
+    "workflow",
+    "productivity",
+    "devops",
+    "ci-cd",
+    "autonomous",
+    "task-execution",
+    "spec-driven-development"
+  ],
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Programming Languages",
+    "Testing",
+    "Machine Learning"
+  ],
+  "activationEvents": [
+    "workspaceContains:.kiro"
+  ],
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
+  "badges": [
+    {
+      "url": "https://img.shields.io/badge/version-1.0.0-blue",
+      "href": "https://github.com/kiro/kiro-automation-extension/releases",
+      "description": "Version"
+    },
+    {
+      "url": "https://img.shields.io/badge/license-MIT-green",
+      "href": "https://github.com/kiro/kiro-automation-extension/blob/main/LICENSE",
+      "description": "License"
+    }
+  ],
+  "main": "./out/src/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "kiro-automation.start",
+        "title": "Kiro Automation: Start",
+        "icon": "$(play)"
+      },
+      {
+        "command": "kiro-automation.stop",
+        "title": "Kiro Automation: Stop",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "kiro-automation.pause",
+        "title": "Kiro Automation: Pause",
+        "icon": "$(debug-pause)"
+      },
+      {
+        "command": "kiro-automation.resume",
+        "title": "Kiro Automation: Resume",
+        "icon": "$(debug-continue)"
+      },
+      {
+        "command": "kiro-automation.showPanel",
+        "title": "Kiro Automation: Show Progress Panel"
+      },
+      {
+        "command": "kiro-automation.showControls",
+        "title": "Kiro Automation: Show Control Panel"
+      },
+      {
+        "command": "kiro-automation.nextTask",
+        "title": "Kiro Automation: Execute Next Task"
+      },
+      {
+        "command": "kiro-automation.showLogs",
+        "title": "Kiro Automation: Show Logs"
+      },
+      {
+        "command": "kiro-automation.clearLogs",
+        "title": "Kiro Automation: Clear Logs"
+      },
+      {
+        "command": "kiro-automation.exportLogs",
+        "title": "Kiro Automation: Export Logs"
+      },
+      {
+        "command": "kiro-automation.openLogFile",
+        "title": "Kiro Automation: Open Log File"
+      },
+      {
+        "command": "kiro-automation.refreshTasks",
+        "title": "Kiro Automation: Refresh Tasks",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "kiro-automation.switchWorkspace",
+        "title": "Kiro Automation: Switch Workspace",
+        "icon": "$(folder)"
+      },
+      {
+        "command": "kiro-automation.showWorkspaceConfig",
+        "title": "Kiro Automation: Show Workspace Configuration",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "kiro-automation.editWorkspaceConfig",
+        "title": "Kiro Automation: Edit Workspace Configuration",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "kiro-automation.resetWorkspaceConfig",
+        "title": "Kiro Automation: Reset Workspace Configuration",
+        "icon": "$(discard)"
+      },
+      {
+        "command": "kiro-automation.selectWorkspace",
+        "title": "Kiro Automation: Select Workspace"
+      },
+      {
+        "command": "kiro-automation.startConcurrent",
+        "title": "Kiro Automation: Start Concurrent Automation",
+        "icon": "$(play-circle)"
+      },
+      {
+        "command": "kiro-automation.stopConcurrent",
+        "title": "Kiro Automation: Stop Concurrent Automation",
+        "icon": "$(stop-circle)"
+      },
+      {
+        "command": "kiro-automation.showAnalytics",
+        "title": "Kiro Automation: Show Analytics Dashboard",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "kiro-automation.pauseConcurrent",
+        "title": "Kiro Automation: Pause Concurrent Automation",
+        "icon": "$(debug-pause)"
+      },
+      {
+        "command": "kiro-automation.resumeConcurrent",
+        "title": "Kiro Automation: Resume Concurrent Automation",
+        "icon": "$(debug-continue)"
+      },
+      {
+        "command": "kiro-automation.showConcurrentPanel",
+        "title": "Kiro Automation: Show Concurrent Execution Panel",
+        "icon": "$(dashboard)"
+      },
+      {
+        "command": "kiro-automation.showHelp",
+        "title": "Kiro Automation: Show Help",
+        "icon": "$(question)"
+      },
+      {
+        "command": "kiro-automation.showTutorial",
+        "title": "Kiro Automation: Show Tutorial",
+        "icon": "$(mortar-board)"
+      },
+      {
+        "command": "kiro-automation.telemetry.optIn",
+        "title": "Kiro Automation: Enable Telemetry"
+      },
+      {
+        "command": "kiro-automation.telemetry.optOut",
+        "title": "Kiro Automation: Disable Telemetry"
+      },
+      {
+        "command": "kiro-automation.telemetry.showSummary",
+        "title": "Kiro Automation: Show Telemetry Summary"
+      },
+      {
+        "command": "kiro-automation.telemetry.export",
+        "title": "Kiro Automation: Export Telemetry Data"
+      }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "kiro-automation-workspaces",
+          "name": "Kiro Workspaces",
+          "icon": "$(folder-library)",
+          "contextualTitle": "Kiro Automation",
+          "when": "workspaceFolderCount > 1"
+        },
+        {
+          "id": "kiro-automation-tasks",
+          "name": "Kiro Automation Tasks",
+          "icon": "$(robot)",
+          "contextualTitle": "Kiro Automation"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "kiro-automation.refreshTasks",
+          "when": "view == kiro-automation-tasks",
+          "group": "navigation"
+        },
+        {
+          "command": "kiro-automation.start",
+          "when": "view == kiro-automation-tasks",
+          "group": "navigation"
+        },
+        {
+          "command": "kiro-automation.switchWorkspace",
+          "when": "view == kiro-automation-workspaces",
+          "group": "navigation"
+        },
+        {
+          "command": "kiro-automation.showWorkspaceConfig",
+          "when": "view == kiro-automation-workspaces",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "kiro-automation.editWorkspaceConfig",
+          "when": "view == kiro-automation-workspaces && viewItem == workspace",
+          "group": "inline"
+        },
+        {
+          "command": "kiro-automation.resetWorkspaceConfig",
+          "when": "view == kiro-automation-workspaces && viewItem == workspace",
+          "group": "workspace"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Kiro Automation",
+      "properties": {
+        "kiro-automation.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable or disable Kiro automation",
+          "order": 1
+        },
+        "kiro-automation.concurrency": {
+          "type": "number",
+          "default": 1,
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Number of concurrent tasks to execute",
+          "order": 2
+        },
+        "kiro-automation.retryAttempts": {
+          "type": "number",
+          "default": 3,
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Number of retry attempts for failed tasks",
+          "order": 3
+        },
+        "kiro-automation.timeout": {
+          "type": "number",
+          "default": 300000,
+          "minimum": 1000,
+          "maximum": 3600000,
+          "description": "Task timeout in milliseconds (1000-3600000)",
+          "order": 4
+        },
+        "kiro-automation.taskDelay": {
+          "type": "number",
+          "default": 2000,
+          "minimum": 0,
+          "description": "Delay between tasks in milliseconds",
+          "order": 5
+        },
+        "kiro-automation.notifications": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show completion notifications",
+          "order": 10
+        },
+        "kiro-automation.notificationLevel": {
+          "type": "string",
+          "default": "all",
+          "enum": [
+            "all",
+            "errors",
+            "none"
+          ],
+          "enumDescriptions": [
+            "Show all notifications",
+            "Show only error notifications",
+            "Do not show any notifications"
+          ],
+          "description": "Level of notifications to display",
+          "order": 11
+        },
+        "kiro-automation.autoResume": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically resume automation on VS Code restart",
+          "order": 20
+        },
+        "kiro-automation.skipOptionalTasks": {
+          "type": "boolean",
+          "default": false,
+          "description": "Skip optional tasks (marked with *) by default",
+          "order": 21
+        },
+        "kiro-automation.verifyCompletion": {
+          "type": "boolean",
+          "default": true,
+          "description": "Verify task completion before proceeding to next task",
+          "order": 22
+        },
+        "kiro-automation.completionVerificationTimeout": {
+          "type": "number",
+          "default": 30000,
+          "minimum": 1000,
+          "description": "Completion verification timeout in milliseconds",
+          "order": 23
+        },
+        "kiro-automation.logLevel": {
+          "type": "string",
+          "default": "info",
+          "enum": [
+            "debug",
+            "info",
+            "warning",
+            "error"
+          ],
+          "enumDescriptions": [
+            "Show all log messages including debug information",
+            "Show informational messages and above",
+            "Show warnings and errors only",
+            "Show errors only"
+          ],
+          "description": "Logging level for automation activities",
+          "order": 30
+        },
+        "kiro-automation.saveLogsToFile": {
+          "type": "boolean",
+          "default": true,
+          "description": "Save automation logs to file",
+          "order": 31
+        },
+        "kiro-automation.maxLogFileSize": {
+          "type": "number",
+          "default": 10,
+          "minimum": 1,
+          "maximum": 1000,
+          "description": "Maximum log file size in MB",
+          "order": 32
+        },
+        "kiro-automation.customPromptTemplate": {
+          "type": "string",
+          "default": "",
+          "description": "Custom prompt template for task execution (leave empty for default)",
+          "order": 40
+        },
+        "kiro-automation.excludedSpecs": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "List of spec names to exclude from automation",
+          "order": 41
+        },
+        "kiro-automation.excludedTasks": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "List of task IDs to exclude from automation",
+          "order": 42
+        },
+        "kiro-automation.performanceMonitoring": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable performance monitoring and resource tracking",
+          "order": 50
+        },
+        "kiro-automation.maxMemoryUsage": {
+          "type": "number",
+          "default": 100,
+          "minimum": 50,
+          "maximum": 2000,
+          "description": "Maximum memory usage in MB",
+          "order": 51
+        },
+        "kiro-automation.maxConcurrentWorkspaces": {
+          "type": "number",
+          "default": 2,
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Maximum number of workspaces to automate concurrently",
+          "order": 52
+        },
+        "kiro-automation.workspaceResourceAllocation": {
+          "type": "object",
+          "default": {},
+          "description": "Resource allocation per workspace (advanced)",
+          "order": 53
+        },
+        "kiro-automation.telemetry.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable anonymous usage tracking to help improve the extension",
+          "order": 60
+        },
+        "kiro-automation.telemetry.showPrompt": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show telemetry consent prompt on first use",
+          "order": 61
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "test": "node ./out/test/runTest.js",
+    "test:unit": "npm run compile && mocha --require source-map-support/register out/test/suite/**/*.test.js",
+    "test:integration": "npm run compile && mocha --require source-map-support/register out/test/integration/**/*.test.js",
+    "test:e2e": "npm run compile && mocha --require source-map-support/register out/test/e2e/**/*.test.js",
+    "test:performance": "npm run compile && mocha --require source-map-support/register out/test/performance/**/*.test.js --timeout 30000",
+    "test:all": "npm run test:unit && npm run test:integration && npm run test:e2e && npm run test:performance",
+    "test:coverage": "nyc npm run test:unit",
+    "test:coverage:all": "nyc npm run test:all",
+    "test:watch": "npm run compile && mocha --require source-map-support/register --watch out/test/suite/**/*.test.js",
+    "lint": "eslint src --ext ts",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "clean": "rimraf out dist *.vsix coverage .nyc_output",
+    "prebuild": "npm run clean && npm run lint",
+    "build": "node scripts/build.js",
+    "build:quick": "node scripts/build.js --skip-tests --skip-lint",
+    "package": "vsce package --out dist/",
+    "prepackage": "npm run compile",
+    "publish:marketplace": "vsce publish",
+    "prepublish:marketplace": "node scripts/pre-publish.js",
+    "version:patch": "node scripts/version-bump.js patch",
+    "version:minor": "node scripts/version-bump.js minor",
+    "version:major": "node scripts/version-bump.js major",
+    "prepare-release": "node scripts/prepare-release.js",
+    "validate": "node scripts/pre-publish.js && vsce ls",
+    "prevalidate": "npm run compile"
+  },
+  "devDependencies": {
+    "@istanbuljs/nyc-config-typescript": "^1.0.2",
+    "@types/glob": "^8.1.0",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "@vscode/test-electron": "^2.3.8",
+    "@vscode/vsce": "^2.22.0",
+    "eslint": "^8.54.0",
+    "glob": "^10.3.10",
+    "mocha": "^10.2.0",
+    "nyc": "^17.1.0",
+    "prettier": "^3.1.0",
+    "source-map-support": "^0.5.21",
+    "typescript": "^5.3.2"
+  }
+}

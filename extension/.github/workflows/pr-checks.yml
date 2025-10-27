@@ -1,0 +1,149 @@
+name: PR Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  validate-pr:
+    name: Validate Pull Request
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Check for package-lock.json changes
+      run: |
+        if git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -q "package-lock.json"; then
+          echo "✓ package-lock.json is updated"
+        else
+          if git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -q "package.json"; then
+            echo "⚠️ package.json changed but package-lock.json was not updated"
+            exit 1
+          fi
+        fi
+    
+    - name: Lint code
+      run: npm run lint
+    
+    - name: Check code formatting
+      run: npm run format -- --check
+    
+    - name: Compile TypeScript
+      run: npm run compile
+    
+    - name: Run tests with coverage
+      run: npm test
+      env:
+        CI: true
+    
+    - name: Check for TODO/FIXME comments
+      run: |
+        if git diff origin/${{ github.base_ref }}...HEAD | grep -E "^\+.*\b(TODO|FIXME)\b"; then
+          echo "⚠️ New TODO/FIXME comments found in this PR"
+        fi
+      continue-on-error: true
+    
+    - name: Validate package
+      run: npm run validate
+    
+    - name: Check bundle size
+      run: |
+        npm run build:quick
+        VSIX_SIZE=$(du -h dist/*.vsix | cut -f1)
+        echo "📦 Extension package size: $VSIX_SIZE"
+        
+        # Warn if package is larger than 10MB
+        SIZE_BYTES=$(stat -f%z dist/*.vsix 2>/dev/null || stat -c%s dist/*.vsix)
+        if [ $SIZE_BYTES -gt 10485760 ]; then
+          echo "⚠️ Warning: Package size exceeds 10MB"
+        fi
+
+  compatibility-check:
+    name: VS Code Compatibility Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Check VS Code engine compatibility
+      run: |
+        MIN_VERSION=$(node -p "require('./package.json').engines.vscode")
+        echo "Minimum VS Code version: $MIN_VERSION"
+        
+        # Verify it's a valid version
+        if ! echo "$MIN_VERSION" | grep -qE "^\^[0-9]+\.[0-9]+\.[0-9]+$"; then
+          echo "⚠️ Invalid VS Code engine version format"
+          exit 1
+        fi
+
+  changelog-check:
+    name: Changelog Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Check if CHANGELOG.md was updated
+      run: |
+        if git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -q "CHANGELOG.md"; then
+          echo "✓ CHANGELOG.md was updated"
+        else
+          echo "⚠️ Consider updating CHANGELOG.md with your changes"
+        fi
+      continue-on-error: true
+
+  comment-pr:
+    name: Comment on PR
+    runs-on: ubuntu-latest
+    needs: [validate-pr, compatibility-check]
+    if: always()
+    
+    steps:
+    - name: Comment PR with results
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { data: checks } = await github.rest.checks.listForRef({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            ref: context.payload.pull_request.head.sha
+          });
+          
+          const allPassed = checks.check_runs.every(run => run.conclusion === 'success');
+          
+          const comment = allPassed
+            ? '✅ All PR checks passed! Ready for review.'
+            : '⚠️ Some PR checks failed. Please review the results above.';
+          
+          github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.payload.pull_request.number,
+            body: comment
+          });
