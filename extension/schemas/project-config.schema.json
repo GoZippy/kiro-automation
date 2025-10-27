@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Kiro Automation project config",
+  "description": "Schema for generated project config.json used by KiroAutomation executor",
+  "type": "object",
+  "properties": {
+    "version": { "type": "string" },
+    "projectName": { "type": "string" },
+    "executorPath": { "type": "string" , "description": "Path to the executor binary or script (absolute or relative)"},
+    "workspace": { "type": "string", "description": "Workspace path for specs and state (absolute or relative)" },
+    "specsPath": { "type": "string", "description": "Relative path inside workspace where specs live" },
+    "automationPath": { "type": "string", "description": "Relative path inside workspace for automation state and artifacts" },
+    "runCmd": { "type": "string", "description": "Optional convenience run command" }
+  },
+  "required": ["version","projectName","executorPath","workspace","specsPath"],
+  "additionalProperties": false
+}
