@@ -1,0 +1,19 @@
+{
+  "version": "1.0.0",
+  "projects": [
+    {
+      "name": "ZippyGameAdmin",
+      "path": "K:\\Projects\\ZippyGameAdmin",
+      "configPath": "K:\\Projects\\ZippyGameAdmin\\.kiro\\config.json",
+      "lastExecution": null,
+      "status": "registered"
+    },
+    {
+      "name": "tmp-setup-test",
+      "path": "k:\\Projects\\KiroAutomation\\scripts\\tmp-setup-test",
+      "configPath": "k:\\Projects\\KiroAutomation\\scripts\\tmp-setup-test\\.kiro\\config.json",
+      "lastExecution": null,
+      "status": "registered"
+    }
+  ]
+}

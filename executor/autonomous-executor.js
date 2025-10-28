@@ -22,7 +22,9 @@ class AutonomousExecutor {
                          process.cwd();
     
     this.config = {
+      // defaults; may be overridden by workspace .kiro/config.json
       specsDir: path.join(workspaceRoot, '.kiro', 'specs'),
+      automationPath: '.kiro/automation',
       workspaceRoot: workspaceRoot,
       executionOrder: config.executionOrder || [
         'sentiment-moderation-service',
@@ -32,9 +34,10 @@ class AutonomousExecutor {
         'community-quest-rpg',
         'matchmaking-friend-finder'
       ],
-      stateFile: path.join(__dirname, 'execution-state.json'),
-      logFile: path.join(__dirname, 'execution.log'),
-      maxRetries: 3,
+  // stateFile and logFile are initialized during initialize() to be workspace-specific
+  maxRetries: 3,
+  dryRun: false,
+  verbose: false,
       checkInterval: 5000, // Check task status every 5 seconds
       taskTimeout: 1800000, // 30 minutes per task
       autoDecisions: {
@@ -74,12 +77,109 @@ class AutonomousExecutor {
 
   async initialize() {
     this.log('🚀 Initializing Fully Autonomous Task Executor...\n');
-    
-    // Create automation directory
-    await fs.mkdir(path.dirname(this.config.stateFile), { recursive: true });
-    
-    // Load previous state
-    await this.loadState();
+    // If a workspace-level config exists, read it and override defaults
+    try {
+      const workspaceConfigPath = path.join(this.config.workspaceRoot, '.kiro', 'config.json');
+      const workspaceConfigRaw = await fs.readFile(workspaceConfigPath, 'utf-8').catch(() => null);
+      if (workspaceConfigRaw) {
+        try {
+          const workspaceConfig = JSON.parse(workspaceConfigRaw);
+          if (workspaceConfig.specsPath) {
+            this.config.specsDir = path.isAbsolute(workspaceConfig.specsPath)
+              ? workspaceConfig.specsPath
+              : path.join(this.config.workspaceRoot, workspaceConfig.specsPath);
+          }
+          if (workspaceConfig.automationPath) {
+            this.config.automationPath = workspaceConfig.automationPath;
+          }
+        } catch (e) {
+          this.log('⚠️  Failed to parse workspace config.json, continuing with defaults');
+        }
+      }
+
+      // Resolve automation directory and state/log file paths
+      const automationDir = path.isAbsolute(this.config.automationPath)
+        ? this.config.automationPath
+        : path.join(this.config.workspaceRoot, this.config.automationPath);
+
+      this.config.stateFile = path.join(automationDir, 'execution-state.json');
+      this.config.logFile = path.join(automationDir, 'execution.log');
+
+      // Create automation directory
+      await fs.mkdir(automationDir, { recursive: true });
+
+      // Acquire a simple lock to prevent concurrent executors for the same workspace
+      this._lockFile = path.join(automationDir, 'execution-state.lock');
+      const STALE_MS = 1000 * 60 * 60 * 24; // 24 hours considered stale
+      try {
+        // Try to create lock file exclusively
+        await fs.open(this._lockFile, 'wx').then(handle => handle.write(String(process.pid)).then(() => handle.close()));
+      } catch (err) {
+        // Lock exists - attempt to detect if it's stale or process is gone
+        try {
+          const lockContents = await fs.readFile(this._lockFile, 'utf-8');
+          const existingPid = parseInt(lockContents.trim(), 10);
+          let processAlive = false;
+          if (!Number.isNaN(existingPid)) {
+            try {
+              process.kill(existingPid, 0);
+              processAlive = true;
+            } catch (e) {
+              processAlive = false;
+            }
+          }
+
+          const stat = await fs.stat(this._lockFile).catch(() => null);
+          const age = stat ? (Date.now() - stat.mtimeMs) : Infinity;
+
+          if (processAlive && !this.config.force) {
+            throw new Error(`Another executor (pid ${existingPid}) appears to be running for this workspace (lock file: ${this._lockFile}). Use --force to override.`);
+          }
+
+          if (!processAlive && age < STALE_MS && !this.config.force) {
+            // If no process but lock is recent (someone may be starting), be conservative
+            throw new Error(`Lock file present but process ${existingPid} not found; lock is recent (${Math.round(age/1000)}s). Use --force to override.`);
+          }
+
+          // Otherwise, consider lock stale or force requested => remove and recreate
+          await fs.unlink(this._lockFile).catch(() => {});
+          await fs.open(this._lockFile, 'wx').then(handle => handle.write(String(process.pid)).then(() => handle.close()));
+        } catch (innerErr) {
+          // Re-throw helpful message
+          throw new Error(innerErr.message || 'Failed to acquire lock');
+        }
+      }
+
+      // Ensure lock file is removed on exit
+      const removeLock = async () => {
+        try { await fs.unlink(this._lockFile).catch(() => {}); } catch (_) {}
+      };
+      process.on('exit', removeLock);
+      process.on('SIGINT', () => { removeLock().then(() => process.exit(130)); });
+      process.on('SIGTERM', () => { removeLock().then(() => process.exit(143)); });
+
+      // Load previous state
+      if (this.config.resume) {
+        await this.loadState();
+      } else {
+        // If not resuming, start fresh and remove previous state file if it exists
+        try {
+          await fs.unlink(this.config.stateFile).catch(() => {});
+        } catch (_) {}
+        this.state = {
+          currentSpec: null,
+          currentTask: null,
+          currentSubtask: null,
+          completedTasks: [],
+          failedTasks: [],
+          decisions: [],
+          startTime: null,
+          logs: []
+        };
+      }
+    } catch (err) {
+      this.log(`⚠️  Initialization warning: ${err.message}`);
+    }
     
     // Validate environment
     await this.validateEnvironment();
@@ -99,7 +199,29 @@ class AutonomousExecutor {
     try {
       await fs.access(this.config.specsDir);
     } catch (error) {
-      throw new Error(`Specs directory not found: ${this.config.specsDir}`);
+      // Try to list nearby spec directories for a helpful message
+      const parent = path.join(this.config.workspaceRoot, '.kiro');
+      let available = [];
+      try {
+        const entries = await fs.readdir(parent);
+        for (const e of entries) {
+          const p = path.join(parent, e);
+          try {
+            const stat = await fs.stat(p);
+            if (stat.isDirectory() && e !== 'automation') available.push(e);
+          } catch (_) {}
+        }
+      } catch (_) {
+        // ignore
+      }
+
+      let msg = `Specs directory not found: ${this.config.specsDir}`;
+      if (available.length > 0) {
+        msg += `\nAvailable spec folders under ${parent}: ${available.join(', ')}`;
+      } else {
+        msg += `\nNo specs found under ${parent}. Create a spec folder or verify your workspace.`;
+      }
+      throw new Error(msg);
     }
     
     // Check if we're in a valid workspace
@@ -127,10 +249,9 @@ class AutonomousExecutor {
 
   async saveState() {
     try {
-      await fs.writeFile(
-        this.config.stateFile,
-        JSON.stringify(this.state, null, 2)
-      );
+      // Ensure state directory exists
+      await fs.mkdir(path.dirname(this.config.stateFile), { recursive: true });
+      await fs.writeFile(this.config.stateFile, JSON.stringify(this.state, null, 2));
     } catch (error) {
       this.log(`⚠️  Failed to save state: ${error.message}`);
     }
@@ -140,10 +261,14 @@ class AutonomousExecutor {
     const timestamp = new Date().toISOString();
     const logEntry = `[${timestamp}] [${level.toUpperCase()}] ${message}`;
     
-    console.log(message);
+    // Respect verbose flag: always print errors, print other levels only when verbose
+    if (level === 'error' || this.config.verbose) {
+      console.log(message);
+    }
+
+    // Keep logs in memory for state and always store them
     this.state.logs.push(logEntry);
-    
-    // Write to log file asynchronously
+    // Write to log file asynchronously (best-effort)
     fs.appendFile(this.config.logFile, logEntry + '\n').catch(() => {});
   }
 
@@ -212,7 +337,7 @@ class AutonomousExecutor {
     this.log(`📋 Found ${tasks.length} top-level tasks\n`);
   try { telemetry.trackEvent('spec.parsed', { specName, taskCount: tasks.length }); } catch (e) {}
     
-    // Execute tasks sequentially
+  // Execute tasks sequentially
     for (const task of tasks) {
       // Skip if already completed
       if (await this.isTaskCompleted(tasksFile, task.id)) {
@@ -567,11 +692,17 @@ For everything else, make the best decision and document it.
       this.log(`\n🔄 Attempt ${attempt}/${this.config.maxRetries}\n`);
       
       try {
-        const result = await this.executeWithKiro(prompt, task, taskWorkDir);
+        let result;
+        if (this.config.dryRun) {
+          this.log('🟡 Dry-run enabled: simulating execution and verification');
+          result = { success: true };
+        } else {
+          result = await this.executeWithKiro(prompt, task, taskWorkDir);
+        }
         
         if (result.success) {
           // Verify implementation
-          const verification = await this.verifyImplementation(task, taskWorkDir);
+          const verification = this.config.dryRun ? { success: true } : await this.verifyImplementation(task, taskWorkDir);
           
           if (verification.success) {
             this.log(`✅ Implementation verified successfully`);
@@ -705,7 +836,7 @@ ${context.bestPractices}
     // This would integrate with Kiro's actual API/CLI
     // For now, we'll simulate the execution
     
-    this.log('🤖 Executing task with Kiro...');
+  this.log('🤖 Executing task with Kiro...');
     
     // In a real implementation, this would:
     // 1. Send prompt to Kiro API
@@ -748,6 +879,10 @@ Kiro will proceed without asking for common choices.
     this.log('   For now, execute manually and press Enter when complete...\n');
     
     // Wait for completion (in real version, this would poll Kiro API)
+    if (this.config.dryRun) {
+      // Don't wait for interactive completion during dry-run
+      return { success: true };
+    }
     await this.waitForCompletion();
     
     return { success: true };
@@ -897,6 +1032,12 @@ if (require.main === module) {
     if (args[i] === '--spec' && args[i + 1]) {
       config.executionOrder = [args[i + 1]];
       i++;
+    } else if (args[i] === '--dry-run') {
+      config.dryRun = true;
+    } else if (args[i] === '--verbose') {
+      config.verbose = true;
+    } else if (args[i] === '--force') {
+      config.force = true;
     } else if (args[i] === '--workspace' && args[i + 1]) {
       config.workspaceRoot = path.resolve(args[i + 1]);
       i++;
