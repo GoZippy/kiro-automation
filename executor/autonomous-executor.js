@@ -105,6 +105,14 @@ class AutonomousExecutor {
       this.config.stateFile = path.join(automationDir, 'execution-state.json');
       this.config.logFile = path.join(automationDir, 'execution.log');
 
+      if (this.config.verbose) {
+        this.log(`Verbose: workspaceRoot=${this.config.workspaceRoot}`);
+        this.log(`Verbose: specsDir=${this.config.specsDir}`);
+        this.log(`Verbose: automationDir=${automationDir}`);
+        this.log(`Verbose: stateFile=${this.config.stateFile}`);
+        this.log(`Verbose: logFile=${this.config.logFile}`);
+      }
+
       // Create automation directory
       await fs.mkdir(automationDir, { recursive: true });
 
@@ -1076,6 +1084,29 @@ Examples:
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--telemetry-opt-in') config.telemetryOptIn = true;
     if (args[i] === '--telemetry-opt-out') config.telemetryOptIn = false;
+  }
+  // Early action: list available specs and exit
+  if (args.includes('--list-specs')) {
+    // Determine workspace root (flag overrides env)
+    let ws = process.env.KIRO_WORKSPACE || null;
+    const wsIndex = args.indexOf('--workspace');
+    if (wsIndex !== -1 && args[wsIndex + 1]) ws = path.resolve(args[wsIndex + 1]);
+    if (!ws) ws = (new AutonomousExecutor({})).findWorkspaceRoot() || process.cwd();
+
+    const specsDir = path.join(ws, '.kiro', 'specs');
+    try {
+      const entries = require('fs').readdirSync(specsDir, { withFileTypes: true });
+      const specs = entries.filter(e => e.isDirectory()).map(d => d.name);
+      if (specs.length === 0) {
+        console.log(`No specs found in ${specsDir}`);
+      } else {
+        console.log(`Specs in ${specsDir}:\n` + specs.join('\n'));
+      }
+    } catch (e) {
+      console.error(`Failed to list specs at ${specsDir}: ${e.message}`);
+      process.exit(2);
+    }
+    process.exit(0);
   }
   
   const executor = new AutonomousExecutor(config);

@@ -75,7 +75,14 @@ console.log(`Wrote project config: ${configPath}`);
 
 // Create run.cmd at project root
 const runCmdPath = path.join(targetPath, 'run.cmd');
-const runCmdContent = `@echo off\r\nREM Convenience script to invoke KiroAutomation executor for this project\r\nSET SCRIPT_DIR=%~dp0\r\nREM Resolve path to config.json inside .kiro\r\nSET CONFIG_PATH=%SCRIPT_DIR%.kiro\\config.json\r\nIF NOT EXIST "%CONFIG_PATH%" (\r\n  echo Missing configuration file: %CONFIG_PATH%\r\n  exit /b 2\r\n)\r\n\r\nREM Resolve executor path from config (relative to project root)\r\nfor /f "delims=" %%i in ('node -e "const c=require('./.kiro/config.json'); console.log(c.executorPath)"') do set EXEC_PATH=%%i\r\n\r\nIF NOT DEFINED EXEC_PATH (\r\n  echo Failed to determine executor path from config.json\r\n  exit /b 3\r\n)\r\n\r\nREM Call the executor with --workspace pointing to the project root and pass through any args\r\nnode "%EXEC_PATH%" --workspace "%SCRIPT_DIR%" %*\r\n`;
+// Try to use the run.cmd template if present
+const templatePath = path.join(repoRoot, 'scripts', 'templates', 'run.cmd.tpl');
+let runCmdContent;
+if (fs.existsSync(templatePath)) {
+  runCmdContent = fs.readFileSync(templatePath, { encoding: 'utf8' });
+} else {
+  runCmdContent = `@echo off\r\nREM Convenience script to invoke KiroAutomation executor for this project\r\nSET SCRIPT_DIR=%~dp0\r\nREM Resolve path to config.json inside .kiro\r\nSET CONFIG_PATH=%SCRIPT_DIR%.kiro\\config.json\r\nIF NOT EXIST "%CONFIG_PATH%" (\r\n  echo Missing configuration file: %CONFIG_PATH%\r\n  exit /b 2\r\n)\r\n\r\nREM Resolve executor path from config (relative to project root)\r\nfor /f "delims=" %%i in ('node -e "const c=require('./.kiro/config.json'); console.log(c.executorPath)"') do set EXEC_PATH=%%i\r\n\r\nIF NOT DEFINED EXEC_PATH (\r\n  echo Failed to determine executor path from config.json\r\n  exit /b 3\r\n)\r\n\r\nREM Call the executor with --workspace pointing to the project root and pass through any args\r\nnode "%EXEC_PATH%" --workspace "%SCRIPT_DIR%" %*\r\n`;
+}
 
 fs.writeFileSync(runCmdPath, runCmdContent, { encoding: 'utf8' });
 console.log(`Wrote run script: ${runCmdPath}`);

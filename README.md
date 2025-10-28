@@ -114,3 +114,20 @@ MIT
 ## Support
 
 For issues, questions, or contributions, please visit the project repository.
+
+## CI test artifact preservation
+
+When running the integration tests this project uses a temporary copy of real workspaces so the tests do not mutate your source tree. The integration test runner can preserve the temporary workspace for debugging and CI uploads:
+
+- Set the environment variable `KEEP_TEST_ARTIFACTS=1` to keep the temporary workspace after a successful run (useful during local debugging).
+- On GitHub Actions the integration test will copy preserved workspaces into `scripts/tests/ci-artifacts/` when it decides to preserve (e.g. on failure). The CI workflow then uploads `scripts/tests/ci-artifacts/**` as job artifacts so you can download the preserved workspace for investigation.
+
+If you want to keep artifacts locally during a run, run:
+
+PowerShell:
+
+```powershell
+$env:KEEP_TEST_ARTIFACTS='1'; node scripts/tests/integration-dryrun.js
+```
+
+Or set `KEEP_TEST_ARTIFACTS=1` in your shell before running tests on other platforms. Artifacts preserved on CI are stored under `scripts/tests/ci-artifacts/integration-<timestamp>`.
